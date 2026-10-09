@@ -1,7 +1,7 @@
 ![Nebula Quanta banner](assets/readme-banner-v1.png)
 
 [![Rust 2024](https://img.shields.io/badge/Rust-2024-blue.svg)](Cargo.toml)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](Cargo.toml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Newton can tell you exactly how two bodies orbit each other. Add a third and
 there is no formula anymore — the only way to know where things end up is to
