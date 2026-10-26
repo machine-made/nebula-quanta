@@ -328,7 +328,8 @@ fn render_particles_into(
     color: ColorRender,
     quantities: &[f64],
 ) -> Result<(), String> {
-    for pixel in buffer.chunks_exact_mut(3) {
+    let (pixels, _) = buffer.as_chunks_mut::<3>();
+    for pixel in pixels {
         pixel[0] = decayed_channel(pixel[0], spec.background[0], spec.trail_decay);
         pixel[1] = decayed_channel(pixel[1], spec.background[1], spec.trail_decay);
         pixel[2] = decayed_channel(pixel[2], spec.background[2], spec.trail_decay);

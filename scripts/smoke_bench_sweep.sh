@@ -9,7 +9,7 @@ if [[ ! -x "$BIN" ]]; then
   exit 1
 fi
 
-output="$($BIN \
+output="$("$BIN" \
   --mode barnes_hut \
   --n 2000 \
   --steps 10 \
