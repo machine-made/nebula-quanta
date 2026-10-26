@@ -328,7 +328,8 @@ fn render_particles_into(
     color: ColorRender,
     quantities: &[f64],
 ) -> Result<(), String> {
-    for pixel in buffer.chunks_exact_mut(3) {
+    let (pixels, _) = buffer.as_chunks_mut::<3>();
+    for pixel in pixels {
         pixel[0] = decayed_channel(pixel[0], spec.background[0], spec.trail_decay);
         pixel[1] = decayed_channel(pixel[1], spec.background[1], spec.trail_decay);
         pixel[2] = decayed_channel(pixel[2], spec.background[2], spec.trail_decay);
@@ -802,6 +803,7 @@ mod tests {
     use std::fs;
     use std::io::Write;
     use std::path::Path;
+    use std::sync::Mutex;
 
     fn recorder_args_vec_with_dir<'a>(extra: &'a [&'a str], frames_dir: &'a str) -> Vec<&'a str> {
         let mut args = vec![
@@ -825,16 +827,42 @@ mod tests {
         Args::parse_from(args)
     }
 
+    /// Serializes every child-process spawn in these tests.
+    ///
+    /// A fork in one test thread copies the write handle that another thread holds
+    /// while it writes a fake ffmpeg script. Running that script then fails with
+    /// "Text file busy" until the copy is closed. Holding this lock while a script is
+    /// written, closed and started means no fork can happen in that window.
+    static SPAWN_LOCK: Mutex<()> = Mutex::new(());
+
+    fn lock_spawns() -> std::sync::MutexGuard<'static, ()> {
+        SPAWN_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    /// Write an executable script and close it before anyone runs it.
     fn write_executable(path: &Path, body: &str) {
-        let mut file = fs::File::create(path).expect("create fake ffmpeg");
-        file.write_all(body.as_bytes()).expect("write fake ffmpeg");
+        {
+            let mut file = fs::File::create(path).expect("create fake ffmpeg");
+            file.write_all(body.as_bytes()).expect("write fake ffmpeg");
+            file.sync_all().expect("sync fake ffmpeg");
+        }
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            let mut permissions = file.metadata().expect("fake metadata").permissions();
+            let mut permissions = fs::metadata(path).expect("fake metadata").permissions();
             permissions.set_mode(0o755);
             fs::set_permissions(path, permissions).expect("chmod fake ffmpeg");
         }
+    }
+
+    /// Write a fake ffmpeg script and start it while holding the spawn lock.
+    fn spawn_fake_ffmpeg(path: &Path, body: &str, output: &str) -> FfmpegSink {
+        let _guard = lock_spawns();
+        write_executable(path, body);
+        FfmpegSink::spawn_with_program(path.to_str().unwrap(), output, 2, 2, 30)
+            .expect("spawn fake ffmpeg")
     }
 
     #[test]
@@ -855,6 +883,7 @@ mod tests {
     }
     #[test]
     fn ffmpeg_missing_returns_actionable_error() {
+        let _guard = lock_spawns();
         let err = FfmpegSink::spawn_with_program(
             ".sc/no-such-ffmpeg-for-test",
             ".sc/missing-output.mp4",
@@ -873,18 +902,11 @@ mod tests {
     fn ffmpeg_nonzero_exit_is_propagated() {
         fs::create_dir_all(".sc/frame-tests").expect("create test dir");
         let ffmpeg = Path::new(".sc/frame-tests/fake-ffmpeg-fail");
-        write_executable(
+        let mut sink = spawn_fake_ffmpeg(
             ffmpeg,
             "#!/bin/sh\ncat >/dev/null\necho fake failure >&2\nexit 17\n",
-        );
-        let mut sink = FfmpegSink::spawn_with_program(
-            ffmpeg.to_str().unwrap(),
             ".sc/frame-tests/fail.mp4",
-            2,
-            2,
-            30,
-        )
-        .expect("spawn fake ffmpeg");
+        );
         sink.write_frame(&[0; 12]).expect("write frame");
         let err = sink.finish().unwrap_err();
         assert!(err.contains("ffmpeg failed"), "unexpected error: {err}");
@@ -895,15 +917,11 @@ mod tests {
         fs::create_dir_all(".sc/frame-tests").expect("create test dir");
         let ffmpeg = Path::new(".sc/frame-tests/fake-ffmpeg-ok");
         let raw = ".sc/frame-tests/raw.rgb";
-        write_executable(ffmpeg, &format!("#!/bin/sh\ncat > {raw}\nexit 0\n"));
-        let mut sink = FfmpegSink::spawn_with_program(
-            ffmpeg.to_str().unwrap(),
+        let mut sink = spawn_fake_ffmpeg(
+            ffmpeg,
+            &format!("#!/bin/sh\ncat > {raw}\nexit 0\n"),
             ".sc/frame-tests/ok.mp4",
-            2,
-            2,
-            30,
-        )
-        .expect("spawn fake ffmpeg");
+        );
         sink.write_frame(&[1; 12]).expect("write frame");
         sink.finish().expect("finish fake ffmpeg");
         assert_eq!(fs::read(raw).expect("read raw"), vec![1; 12]);
