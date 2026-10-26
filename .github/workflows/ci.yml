@@ -28,7 +28,32 @@ jobs:
         run: cargo fmt --check
 
       - name: Lint
-        run: cargo clippy --all-targets ${{ matrix.feature_args }} -- -D warnings
+        run: |
+          echo "::notice title=rustc::$(rustc --version) | $(cargo clippy --version)"
+          cargo clippy --all-targets ${{ matrix.feature_args }} --message-format=json -- -D warnings > clippy.json || true
+          python3 - <<'PY'
+          import json
+          n = 0
+          for line in open("clippy.json"):
+              try:
+                  m = json.loads(line)
+              except ValueError:
+                  continue
+              if m.get("reason") != "compiler-message":
+                  continue
+              msg = m["message"]
+              if msg["level"] not in ("error", "warning"):
+                  continue
+              sp = next((x for x in msg["spans"] if x["is_primary"]), None)
+              loc = f"file={sp['file_name']},line={sp['line_start']}," if sp else ""
+              code = (msg.get("code") or {}).get("code", "")
+              text = (code + " " + msg["message"]).replace("\n", " ")
+              print(f"::error {loc}title=clippy::{text}")
+              n += 1
+              if n >= 9:
+                  break
+          PY
+          cargo clippy --all-targets ${{ matrix.feature_args }} -- -D warnings
 
       - name: Build release
         run: cargo build --release ${{ matrix.feature_args }}
