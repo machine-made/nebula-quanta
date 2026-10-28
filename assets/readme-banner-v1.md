@@ -29,4 +29,4 @@ Output intent: professional README banner suitable for GitHub, saved as assets/r
 ```
 
 Post-processing:
-- Copied generated PNG from `/home/rfrantz/.codex/generated_images/019eb5fb-e2f8-7152-8b5a-ea78a657585f/ig_0813eed8266bab46016a2a849d0c308191a456826652314273.png` to `assets/readme-banner-v1.png`.
+- Copied generated PNG from `~/.codex/generated_images/019eb5fb-e2f8-7152-8b5a-ea78a657585f/ig_0813eed8266bab46016a2a849d0c308191a456826652314273.png` to `assets/readme-banner-v1.png`.
