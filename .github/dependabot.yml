@@ -1,16 +1,6 @@
 version: 2
 updates:
 
-  - package-ecosystem: "npm"
-    directory: "/"
-    open-pull-requests-limit: 5
-    schedule:
-      interval: monthly
-    groups:
-      npm-updates:
-        patterns:
-          - "*"
-
   - package-ecosystem: "cargo"
     directory: "/"
     open-pull-requests-limit: 5
@@ -22,11 +12,21 @@ updates:
           - "*"
 
   - package-ecosystem: "github-actions"
-    directory: "/.github/workflows"
+    directory: "/"
     open-pull-requests-limit: 5
     schedule:
       interval: monthly
     groups:
       github-actions-updates:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    open-pull-requests-limit: 5
+    schedule:
+      interval: monthly
+    groups:
+      npm-updates:
         patterns:
           - "*"
