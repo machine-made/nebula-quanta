@@ -1,9 +1,10 @@
-![Nebula Quanta banner](assets/readme-banner-v1.png)
+![nebula-quanta banner](https://raw.githubusercontent.com/machine-made/nebula-quanta/main/assets/readme-banner-v1.png)
 
+[![CI](https://github.com/machine-made/nebula-quanta/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/machine-made/nebula-quanta/actions/workflows/ci.yml)
 [![Rust 2024](https://img.shields.io/badge/Rust-2024-blue.svg)](Cargo.toml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Newton can tell you exactly how two bodies orbit each other. Add a third and
+`nebula-quanta` runs an N-body simulation. Newton can tell you exactly how two bodies orbit each other. Add a third and
 there is no formula anymore — the only way to know where things end up is to
 compute every gravitational pull and step time forward in small increments.
 That is an N-body simulation: here, 20,000 point masses, each attracting all
