@@ -1,4 +1,4 @@
-![nebula-quanta banner](https://raw.githubusercontent.com/machine-made/nebula-quanta/main/assets/readme-banner-v1.png)
+![nebula-quanta banner](https://raw.githubusercontent.com/machine-made/nebula-quanta/main/assets/readme-banner-v3.jpg)
 
 [![CI](https://github.com/machine-made/nebula-quanta/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/machine-made/nebula-quanta/actions/workflows/ci.yml)
 [![Rust 2024](https://img.shields.io/badge/Rust-2024-blue.svg)](Cargo.toml)
